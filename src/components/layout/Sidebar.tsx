@@ -8,6 +8,7 @@ import {
   GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -23,11 +24,14 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-sidebar hidden lg:block">
       <div className="flex h-full flex-col">
         {/* Logo */}
-        <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <GraduationCap className="h-5 w-5 text-primary-foreground" />
+        <div className="flex h-16 items-center justify-between border-b border-border px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <GraduationCap className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-lg font-bold tracking-tight">EduPro</span>
           </div>
-          <span className="text-lg font-bold tracking-tight">EduPro</span>
+          <ThemeToggle />
         </div>
 
         {/* Navigation */}
