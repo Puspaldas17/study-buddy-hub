@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_sessions: {
+        Row: {
+          class_name: string
+          created_at: string | null
+          creator_id: string
+          expires_at: string
+          id: string
+          is_active: boolean | null
+          session_code: string
+        }
+        Insert: {
+          class_name: string
+          created_at?: string | null
+          creator_id: string
+          expires_at: string
+          id?: string
+          is_active?: boolean | null
+          session_code: string
+        }
+        Update: {
+          class_name?: string
+          created_at?: string | null
+          creator_id?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          session_code?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -79,7 +109,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      validate_and_record_attendance: {
+        Args: { p_attendance_code: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
