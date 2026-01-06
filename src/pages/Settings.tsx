@@ -1,19 +1,50 @@
-import { Moon, Sun, Monitor, User, Bell, Shield, Palette } from "lucide-react";
+import { Moon, Sun, Monitor, User, Bell, Shield, Palette, LogOut, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const themeOptions = [
     { value: "light", label: "Light", icon: Sun },
     { value: "dark", label: "Dark", icon: Moon },
     { value: "system", label: "System", icon: Monitor },
   ] as const;
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been signed out successfully.",
+      });
+      navigate("/auth", { replace: true });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
+  const userInitial = user?.email?.charAt(0).toUpperCase() || "U";
+  const userEmail = user?.email || "Unknown";
+  const userName = user?.user_metadata?.full_name || "User";
 
   return (
     <div className="space-y-8">
@@ -75,11 +106,11 @@ export default function Settings() {
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
-                S
+                {userInitial}
               </div>
               <div>
-                <p className="font-semibold">Student User</p>
-                <p className="text-sm text-muted-foreground">student@university.edu</p>
+                <p className="font-semibold">{userName}</p>
+                <p className="text-sm text-muted-foreground">{userEmail}</p>
               </div>
             </div>
             <Button variant="outline" className="w-full">
@@ -150,8 +181,18 @@ export default function Settings() {
               </div>
               <Switch defaultChecked />
             </div>
-            <Button variant="outline" className="w-full text-destructive hover:text-destructive">
-              Delete Account
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+            >
+              {isSigningOut ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <LogOut className="mr-2 h-4 w-4" />
+              )}
+              Sign Out
             </Button>
           </CardContent>
         </Card>
