@@ -8,13 +8,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { z } from "zod";
-
-// Validation schema
-const classNameSchema = z.string()
-  .min(1, "Class name is required")
-  .max(100, "Class name must be 100 characters or less")
-  .regex(/^[a-zA-Z0-9\s\-_]+$/, "Class name can only contain letters, numbers, spaces, hyphens and underscores");
 
 export function QRGenerator() {
   const [className, setClassName] = useState("");
@@ -22,7 +15,6 @@ export function QRGenerator() {
   const [copied, setCopied] = useState(false);
   const [expiresIn, setExpiresIn] = useState(300); // 5 minutes
   const [isGenerating, setIsGenerating] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Countdown timer
@@ -33,7 +25,6 @@ export function QRGenerator() {
           if (prev <= 1) {
             clearInterval(timer);
             setQrValue("");
-            setSessionId(null);
             toast({
               title: "QR Code Expired",
               description: "Generate a new QR code for attendance",
@@ -49,12 +40,11 @@ export function QRGenerator() {
   }, [qrValue]);
 
   const generateQR = async () => {
-    // Validate input
-    const validationResult = classNameSchema.safeParse(className.trim());
-    if (!validationResult.success) {
+    // Basic client-side check (server does full validation)
+    if (!className.trim()) {
       toast({
-        title: "Invalid class name",
-        description: validationResult.error.errors[0].message,
+        title: "Class name required",
+        description: "Please enter a class name to generate QR code",
         variant: "destructive",
       });
       return;
@@ -72,39 +62,42 @@ export function QRGenerator() {
     setIsGenerating(true);
 
     try {
-      // Generate a unique session code
-      const timestamp = Date.now();
-      const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const sessionCode = `ATTEND-${validationResult.data.replace(/\s+/g, "-")}-${randomPart}-${timestamp}`;
-      
-      // Calculate expiration time (5 minutes from now)
-      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
-      // Create attendance session in database
-      const { data, error } = await supabase
-        .from("attendance_sessions")
-        .insert({
-          creator_id: user.id,
-          class_name: validationResult.data,
-          session_code: sessionCode,
-          expires_at: expiresAt,
-          is_active: true,
-        })
-        .select("id")
-        .single();
+      // Call the secure server-side RPC function
+      const { data, error } = await supabase.rpc("create_attendance_session", {
+        p_class_name: className.trim(),
+        p_duration_minutes: 5,
+      });
 
       if (error) {
         throw error;
       }
 
-      setSessionId(data.id);
-      setQrValue(sessionCode);
-      setExpiresIn(300);
-      
-      toast({
-        title: "QR Code Generated",
-        description: "Students can now scan to mark attendance. Valid for 5 minutes.",
-      });
+      // Parse the response
+      const result = data as {
+        success: boolean;
+        session_code?: string;
+        class_name?: string;
+        expires_at?: string;
+        duration_minutes?: number;
+        error?: string;
+      } | null;
+
+      if (result && result.success) {
+        setQrValue(result.session_code || "");
+        setExpiresIn(300); // 5 minutes
+        
+        toast({
+          title: "QR Code Generated",
+          description: "Students can now scan to mark attendance. Valid for 5 minutes.",
+        });
+      } else {
+        const errorMessage = result?.error || "Failed to generate attendance code";
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Failed to generate QR code:", error);
       toast({
@@ -155,6 +148,9 @@ export function QRGenerator() {
             maxLength={100}
             disabled={isGenerating}
           />
+          <p className="text-xs text-muted-foreground">
+            Letters, numbers, spaces, hyphens and underscores only
+          </p>
         </div>
 
         <Button 
