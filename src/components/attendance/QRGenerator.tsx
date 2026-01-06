@@ -1,37 +1,120 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { RefreshCw, Copy, Check, Clock } from "lucide-react";
+import { RefreshCw, Copy, Check, Clock, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { z } from "zod";
+
+// Validation schema
+const classNameSchema = z.string()
+  .min(1, "Class name is required")
+  .max(100, "Class name must be 100 characters or less")
+  .regex(/^[a-zA-Z0-9\s\-_]+$/, "Class name can only contain letters, numbers, spaces, hyphens and underscores");
 
 export function QRGenerator() {
   const [className, setClassName] = useState("");
   const [qrValue, setQrValue] = useState("");
   const [copied, setCopied] = useState(false);
   const [expiresIn, setExpiresIn] = useState(300); // 5 minutes
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  const generateQR = () => {
-    if (!className.trim()) {
+  // Countdown timer
+  useEffect(() => {
+    if (qrValue && expiresIn > 0) {
+      const timer = setInterval(() => {
+        setExpiresIn((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setQrValue("");
+            setSessionId(null);
+            toast({
+              title: "QR Code Expired",
+              description: "Generate a new QR code for attendance",
+              variant: "destructive",
+            });
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [qrValue]);
+
+  const generateQR = async () => {
+    // Validate input
+    const validationResult = classNameSchema.safeParse(className.trim());
+    if (!validationResult.success) {
       toast({
-        title: "Class name required",
-        description: "Please enter a class name to generate QR code",
+        title: "Invalid class name",
+        description: validationResult.error.errors[0].message,
         variant: "destructive",
       });
       return;
     }
 
-    const timestamp = Date.now();
-    const code = `ATTEND-${className.replace(/\s+/g, "-")}-${timestamp}`;
-    setQrValue(code);
-    setExpiresIn(300);
-    
-    toast({
-      title: "QR Code Generated",
-      description: "Students can now scan to mark attendance",
-    });
+    if (!user) {
+      toast({
+        title: "Not authenticated",
+        description: "Please sign in to generate attendance codes",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      // Generate a unique session code
+      const timestamp = Date.now();
+      const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const sessionCode = `ATTEND-${validationResult.data.replace(/\s+/g, "-")}-${randomPart}-${timestamp}`;
+      
+      // Calculate expiration time (5 minutes from now)
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+      // Create attendance session in database
+      const { data, error } = await supabase
+        .from("attendance_sessions")
+        .insert({
+          creator_id: user.id,
+          class_name: validationResult.data,
+          session_code: sessionCode,
+          expires_at: expiresAt,
+          is_active: true,
+        })
+        .select("id")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      setSessionId(data.id);
+      setQrValue(sessionCode);
+      setExpiresIn(300);
+      
+      toast({
+        title: "QR Code Generated",
+        description: "Students can now scan to mark attendance. Valid for 5 minutes.",
+      });
+    } catch (error) {
+      console.error("Failed to generate QR code:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate attendance code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const copyCode = async () => {
@@ -69,12 +152,23 @@ export function QRGenerator() {
             placeholder="e.g., CS201 - Data Structures"
             value={className}
             onChange={(e) => setClassName(e.target.value)}
+            maxLength={100}
+            disabled={isGenerating}
           />
         </div>
 
-        <Button onClick={generateQR} className="w-full" variant="gradient">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Generate QR Code
+        <Button 
+          onClick={generateQR} 
+          className="w-full" 
+          variant="gradient"
+          disabled={isGenerating}
+        >
+          {isGenerating ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 h-4 w-4" />
+          )}
+          {isGenerating ? "Generating..." : "Generate QR Code"}
         </Button>
 
         {qrValue && (

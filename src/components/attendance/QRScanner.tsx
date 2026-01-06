@@ -10,15 +10,16 @@ import { z } from "zod";
 
 type ScanStatus = "idle" | "scanning" | "processing" | "success" | "error";
 
-// Validation schema for QR code format
+// Basic validation schema for QR code format (server will do full validation)
 const qrCodeSchema = z.string()
   .min(1, "QR code cannot be empty")
-  .max(500, "QR code too long")
-  .regex(/^ATTEND-[\w\s]+-\d{6}$/, "Invalid attendance QR code format");
+  .max(200, "QR code too long")
+  .startsWith("ATTEND-", "Not a valid attendance code");
 
 export function QRScanner() {
   const [status, setStatus] = useState<ScanStatus>("idle");
   const [scannedData, setScannedData] = useState<string | null>(null);
+  const [resultMessage, setResultMessage] = useState<string>("");
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
@@ -31,6 +32,7 @@ export function QRScanner() {
 
       setStatus("scanning");
       setScannedData(null);
+      setResultMessage("");
 
       await scannerRef.current.start(
         { facingMode: "environment" },
@@ -68,11 +70,12 @@ export function QRScanner() {
     await stopScanning();
     setStatus("processing");
     
-    // Validate the QR code format
+    // Basic client-side validation (server does full validation)
     const validationResult = qrCodeSchema.safeParse(decodedText);
     
     if (!validationResult.success) {
       setStatus("error");
+      setResultMessage("This is not a valid attendance QR code");
       toast({
         title: "Invalid QR Code",
         description: "This QR code is not a valid attendance code.",
@@ -81,13 +84,9 @@ export function QRScanner() {
       return;
     }
 
-    // Parse the attendance code
-    const parts = decodedText.split("-");
-    const className = parts.slice(1, -1).join(" ");
-    const attendanceCode = decodedText;
-
     if (!user) {
       setStatus("error");
+      setResultMessage("Please sign in to mark attendance");
       toast({
         title: "Not Authenticated",
         description: "Please sign in to mark attendance.",
@@ -96,58 +95,56 @@ export function QRScanner() {
       return;
     }
 
-    // Sanitize class name (limit length, remove special characters)
-    const sanitizedClassName = className
-      .slice(0, 100)
-      .replace(/[<>'"&]/g, '');
-
     try {
-      // Check if attendance already recorded for this session
-      const { data: existingRecord, error: checkError } = await supabase
-        .from("attendance_records")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("attendance_code", attendanceCode)
-        .maybeSingle();
-
-      if (checkError) {
-        throw checkError;
-      }
-
-      if (existingRecord) {
-        setStatus("success");
-        setScannedData(decodedText);
-        toast({
-          title: "Already Checked In",
-          description: `You have already marked attendance for ${sanitizedClassName}`,
-        });
-        return;
-      }
-
-      // Insert attendance record
-      const { error: insertError } = await supabase
-        .from("attendance_records")
-        .insert({
-          user_id: user.id,
-          class_name: sanitizedClassName,
-          attendance_code: attendanceCode,
-          status: "present",
-        });
-
-      if (insertError) {
-        throw insertError;
-      }
-
-      setScannedData(decodedText);
-      setStatus("success");
-
-      toast({
-        title: "Attendance Marked!",
-        description: `Successfully checked in for ${sanitizedClassName}`,
+      // Call the server-side RPC function for validation
+      const { data, error } = await supabase.rpc("validate_and_record_attendance", {
+        p_attendance_code: decodedText,
       });
+
+      if (error) {
+        throw error;
+      }
+
+      // Parse the response - it's returned as JSONB from the function
+      const result = data as {
+        success: boolean;
+        class_name?: string;
+        already_recorded?: boolean;
+        message?: string;
+        error?: string;
+      } | null;
+
+      // Handle the response from the server
+      if (result && result.success) {
+        setScannedData(decodedText);
+        setResultMessage(result.class_name || "");
+        setStatus("success");
+
+        if (result.already_recorded) {
+          toast({
+            title: "Already Checked In",
+            description: `You have already marked attendance for ${result.class_name}`,
+          });
+        } else {
+          toast({
+            title: "Attendance Marked!",
+            description: `Successfully checked in for ${result.class_name}`,
+          });
+        }
+      } else {
+        setStatus("error");
+        const errorMessage = result?.error || "Invalid or expired attendance code";
+        setResultMessage(errorMessage);
+        toast({
+          title: "Invalid Code",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Failed to record attendance:", error);
       setStatus("error");
+      setResultMessage("Failed to verify attendance code");
       toast({
         title: "Error",
         description: "Failed to record attendance. Please try again.",
@@ -202,7 +199,7 @@ export function QRScanner() {
                 <Loader2 className="h-12 w-12 text-primary animate-spin" />
               </div>
               <p className="text-center text-muted-foreground">
-                Recording attendance...
+                Verifying attendance code...
               </p>
             </div>
           )}
@@ -215,7 +212,7 @@ export function QRScanner() {
               <div className="text-center">
                 <p className="font-semibold text-foreground">Attendance Marked!</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {scannedData?.split("-").slice(1, -1).join(" ")}
+                  {resultMessage}
                 </p>
               </div>
             </div>
@@ -227,7 +224,7 @@ export function QRScanner() {
                 <XCircle className="h-12 w-12 text-destructive" />
               </div>
               <p className="text-center text-muted-foreground">
-                Could not access camera or invalid QR code
+                {resultMessage || "Could not access camera or invalid QR code"}
               </p>
             </div>
           )}
@@ -242,7 +239,7 @@ export function QRScanner() {
         ) : status === "processing" ? (
           <Button disabled variant="outline" className="w-full">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing...
+            Verifying...
           </Button>
         ) : (
           <Button onClick={startScanning} variant="gradient" className="w-full">
