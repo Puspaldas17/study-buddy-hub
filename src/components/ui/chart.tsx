@@ -59,32 +59,45 @@ const ChartContainer = React.forwardRef<
 ChartContainer.displayName = "Chart";
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
+  const colorConfig = Object.entries(config).filter(([_, item]) => item.theme || item.color);
 
   if (!colorConfig.length) {
     return null;
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
-      }}
-    />
-  );
+  // Avoid dangerouslySetInnerHTML to prevent any possibility of style-tag breakouts
+  // if chart config ever becomes dynamic.
+  const safeChartId = id.replace(/\\/g, "\\\\").replace(/\"/g, "\\\"");
+
+  const css = Object.entries(THEMES)
+    .map(([theme, prefix]) => {
+      const lines = colorConfig
+        .map(([key, itemConfig]) => {
+          const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, "");
+          if (!safeKey) return null;
+
+          const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+          if (!color) return null;
+
+          // Basic hardening: prevent additional CSS declarations/blocks via crafted values.
+          if (typeof color !== "string" || color.length > 200 || /[;<>{}]/.test(color)) return null;
+
+          return `  --color-${safeKey}: ${color};`;
+        })
+        .filter(Boolean)
+        .join("\n");
+
+      if (!lines) return "";
+      return `${prefix} [data-chart=\"${safeChartId}\"] {\n${lines}\n}\n`;
+    })
+    .filter((block) => block.trim().length > 0)
+    .join("\n");
+
+  if (!css.trim()) {
+    return null;
+  }
+
+  return <style>{css}</style>;
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
