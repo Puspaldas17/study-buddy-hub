@@ -109,6 +109,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_attendance_session: {
+        Args: { p_class_name: string; p_duration_minutes?: number }
+        Returns: Json
+      }
       validate_and_record_attendance: {
         Args: { p_attendance_code: string }
         Returns: Json
