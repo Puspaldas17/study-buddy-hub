@@ -43,28 +43,29 @@ export function AttendanceChart({ records }: AttendanceChartProps) {
 
   return (
     <Card className="animate-fade-in" style={{ animationDelay: "0.15s" }}>
-      <CardHeader>
-        <CardTitle className="text-lg">Attendance This Week</CardTitle>
+      <CardHeader className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-2 lg:pb-2">
+        <CardTitle className="text-sm sm:text-base lg:text-lg">Attendance This Week</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 sm:p-4 lg:p-6 pt-0">
         {records.length === 0 ? (
-          <div className="flex h-[200px] items-center justify-center text-muted-foreground">
+          <div className="flex h-[150px] sm:h-[180px] lg:h-[200px] items-center justify-center text-sm text-muted-foreground">
             No attendance records yet
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="h-[200px] w-full">
-            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <ChartContainer config={chartConfig} className="h-[150px] sm:h-[180px] lg:h-[200px] w-full">
+            <BarChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
               <XAxis 
                 dataKey="label" 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
                 allowDecimals={false}
+                width={30}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Bar 

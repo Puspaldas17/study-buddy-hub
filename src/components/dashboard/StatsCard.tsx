@@ -38,18 +38,18 @@ export function StatsCard({
 
   return (
     <Card className={cn("animate-fade-in", variantStyles[variant])}>
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-3xl font-bold tracking-tight">{value}</p>
+      <CardContent className="p-3 sm:p-4 lg:p-6">
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">{title}</p>
+            <p className="text-lg sm:text-2xl lg:text-3xl font-bold tracking-tight truncate">{value}</p>
             {subtitle && (
-              <p className="text-sm text-muted-foreground">{subtitle}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">{subtitle}</p>
             )}
             {trend && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-wrap">
                 <span className={cn(
-                  "text-sm font-medium",
+                  "text-xs sm:text-sm font-medium",
                   trend.isPositive ? "text-success" : "text-destructive"
                 )}>
                   {trend.isPositive ? "+" : ""}{trend.value}%
@@ -58,8 +58,8 @@ export function StatsCard({
               </div>
             )}
           </div>
-          <div className={cn("rounded-xl p-3", iconStyles[variant])}>
-            <Icon className="h-6 w-6" />
+          <div className={cn("rounded-lg sm:rounded-xl p-2 sm:p-3 shrink-0", iconStyles[variant])}>
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
           </div>
         </div>
       </CardContent>
