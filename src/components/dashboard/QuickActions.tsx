@@ -30,25 +30,25 @@ const actions = [
 export function QuickActions() {
   return (
     <Card variant="glass" className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
-      <CardHeader>
-        <CardTitle className="text-lg">Quick Actions</CardTitle>
+      <CardHeader className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-2 lg:pb-2">
+        <CardTitle className="text-sm sm:text-base lg:text-lg">Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="p-3 sm:p-4 lg:p-6 pt-2 space-y-2 sm:space-y-3">
         {actions.map((action) => (
           <Link key={action.title} to={action.href}>
-            <div className="group flex items-center gap-4 rounded-lg border border-border p-4 transition-all duration-200 hover:border-primary/50 hover:bg-secondary/50">
-              <div className={`rounded-lg p-2.5 ${
+            <div className="group flex items-center gap-2 sm:gap-3 lg:gap-4 rounded-lg border border-border p-2 sm:p-3 lg:p-4 transition-all duration-200 hover:border-primary/50 hover:bg-secondary/50">
+              <div className={`rounded-lg p-1.5 sm:p-2 lg:p-2.5 shrink-0 ${
                 action.color === "primary" ? "bg-primary/10 text-primary" :
                 action.color === "success" ? "bg-success/10 text-success" :
                 "bg-streak/10 text-streak"
               }`}>
-                <action.icon className="h-5 w-5" />
+                <action.icon className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-medium">{action.title}</h3>
-                <p className="text-sm text-muted-foreground">{action.description}</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm sm:text-base font-medium truncate">{action.title}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">{action.description}</p>
               </div>
-              <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground transition-transform group-hover:translate-x-1 shrink-0" />
             </div>
           </Link>
         ))}

@@ -93,19 +93,19 @@ export default function Dashboard() {
   const userName = user?.user_metadata?.full_name || "Student";
   
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8 px-1 sm:px-0">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">
           Welcome back, <span className="gradient-text">{userName}</span>
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground">
           Here's an overview of your learning progress
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 lg:grid-cols-4">
         <StatsCard
           title="Total Check-ins"
           value={loading ? "..." : totalCheckIns}
@@ -137,13 +137,13 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 lg:gap-6 lg:grid-cols-2">
         <AttendanceChart records={attendanceRecords} />
         <ClassBreakdownChart records={attendanceRecords} />
       </div>
 
       {/* Quick Actions & Recent Activity */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 lg:gap-6 lg:grid-cols-2">
         <QuickActions />
         <RecentActivity />
       </div>
