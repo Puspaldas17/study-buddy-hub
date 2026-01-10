@@ -1,6 +1,8 @@
+import * as React from "react";
 import { GraduationCap, Heart } from "lucide-react";
 
-export function Footer() {
+export const Footer = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
+  (props, ref) => {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -38,4 +40,6 @@ export function Footer() {
       </div>
     </footer>
   );
-}
+});
+
+Footer.displayName = "Footer";

@@ -1,3 +1,4 @@
+import * as React from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -14,8 +15,9 @@ const navItems = [
   { icon: Target, label: "Habits", path: "/habits" },
 ];
 
-export function MobileNav() {
-  const location = useLocation();
+export const MobileNav = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
+  (props, ref) => {
+    const location = useLocation();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-lg lg:hidden">
@@ -44,4 +46,6 @@ export function MobileNav() {
       </div>
     </nav>
   );
-}
+});
+
+MobileNav.displayName = "MobileNav";
