@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/navigation/UserMenu";
+import { CommandPaletteHint } from "@/components/navigation/CommandPalette";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -42,6 +44,11 @@ const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
           <ThemeToggle />
         </div>
 
+        {/* Search Hint */}
+        <div className="px-4 pt-4">
+          <CommandPaletteHint />
+        </div>
+
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-4">
           {navItems.map((item) => {
@@ -68,7 +75,7 @@ const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
           })}
         </nav>
 
-        {/* Settings */}
+        {/* Settings Link */}
         <div className="border-t border-border p-4">
           <NavLink
             to="/settings"
@@ -83,6 +90,11 @@ const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
             <Settings className="h-5 w-5" />
             Settings
           </NavLink>
+        </div>
+
+        {/* User Menu */}
+        <div className="border-t border-border p-4">
+          <UserMenu />
         </div>
       </div>
     );

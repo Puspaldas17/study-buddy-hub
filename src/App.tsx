@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Layout } from "@/components/layout/Layout";
+import { CommandPalette } from "@/components/navigation/CommandPalette";
 import Index from "./pages/Index";
 import Attendance from "./pages/Attendance";
 import Notes from "./pages/Notes";
@@ -25,6 +26,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <CommandPalette />
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route
