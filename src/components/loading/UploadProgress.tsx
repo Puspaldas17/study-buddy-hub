@@ -1,54 +1,52 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Upload, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { memo, useMemo } from "react";
+
+type UploadStatus = "idle" | "uploading" | "success" | "error";
 
 interface UploadProgressProps {
   progress: number;
-  status: "idle" | "uploading" | "success" | "error";
+  status: UploadStatus;
   fileName?: string;
   fileSize?: string;
   onCancel?: () => void;
 }
 
-export function UploadProgress({
+const spinTransition = { duration: 2, repeat: Infinity, ease: "linear" as const };
+
+const STATUS_CONFIG = {
+  success: { icon: CheckCircle2, iconClass: "text-success", text: "Upload complete", barClass: "bg-success" },
+  error: { icon: XCircle, iconClass: "text-destructive", text: "Upload failed", barClass: "bg-destructive" },
+  uploading: { icon: Upload, iconClass: "text-primary", text: "Uploading...", barClass: "bg-primary", spin: true },
+  idle: { icon: FileText, iconClass: "text-muted-foreground", text: "Ready to upload", barClass: "bg-muted-foreground/30" },
+} as const;
+
+export const UploadProgress = memo(function UploadProgress({
   progress,
   status,
   fileName,
   fileSize,
   onCancel,
 }: UploadProgressProps) {
-  const getStatusIcon = () => {
-    switch (status) {
-      case "success":
-        return <CheckCircle2 className="h-5 w-5 text-success" />;
-      case "error":
-        return <XCircle className="h-5 w-5 text-destructive" />;
-      case "uploading":
-        return (
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          >
-            <Upload className="h-5 w-5 text-primary" />
-          </motion.div>
-        );
-      default:
-        return <FileText className="h-5 w-5 text-muted-foreground" />;
-    }
-  };
+  const config = STATUS_CONFIG[status];
+  const Icon = config.icon;
+  
+  const statusText = useMemo(() => 
+    status === "uploading" ? `${config.text} ${progress}%` : config.text,
+    [status, config.text, progress]
+  );
 
-  const getStatusText = () => {
-    switch (status) {
-      case "success":
-        return "Upload complete";
-      case "error":
-        return "Upload failed";
-      case "uploading":
-        return `Uploading... ${progress}%`;
-      default:
-        return "Ready to upload";
+  const iconElement = useMemo(() => {
+    if ('spin' in config && config.spin) {
+      return (
+        <motion.div animate={{ rotate: 360 }} transition={spinTransition}>
+          <Icon className={cn("h-5 w-5", config.iconClass)} />
+        </motion.div>
+      );
     }
-  };
+    return <Icon className={cn("h-5 w-5", config.iconClass)} />;
+  }, [config, Icon]);
 
   return (
     <motion.div
@@ -59,7 +57,7 @@ export function UploadProgress({
     >
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-          {getStatusIcon()}
+          {iconElement}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
@@ -68,7 +66,7 @@ export function UploadProgress({
               <span className="shrink-0 text-xs text-muted-foreground">{fileSize}</span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">{getStatusText()}</p>
+          <p className="text-xs text-muted-foreground">{statusText}</p>
         </div>
         {status === "uploading" && onCancel && (
           <button
@@ -80,16 +78,9 @@ export function UploadProgress({
         )}
       </div>
       
-      {/* Progress bar */}
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
         <motion.div
-          className={cn(
-            "h-full rounded-full transition-colors",
-            status === "success" && "bg-success",
-            status === "error" && "bg-destructive",
-            status === "uploading" && "bg-primary",
-            status === "idle" && "bg-muted-foreground/30"
-          )}
+          className={cn("h-full rounded-full transition-colors", config.barClass)}
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.3, ease: "easeOut" }}
@@ -97,4 +88,4 @@ export function UploadProgress({
       </div>
     </motion.div>
   );
-}
+});

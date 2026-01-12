@@ -1,7 +1,11 @@
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { memo } from "react";
 
-export function PageLoader() {
+const spinTransition = { duration: 1, repeat: Infinity, ease: "linear" as const };
+const fadeTransition = { delay: 0.2 };
+
+export const PageLoader = memo(function PageLoader() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
       <motion.div
@@ -9,16 +13,13 @@ export function PageLoader() {
         animate={{ opacity: 1, scale: 1 }}
         className="flex flex-col items-center gap-4"
       >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        >
+        <motion.div animate={{ rotate: 360 }} transition={spinTransition}>
           <Loader2 className="h-10 w-10 text-primary" />
         </motion.div>
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          transition={fadeTransition}
           className="text-sm text-muted-foreground"
         >
           Loading...
@@ -26,4 +27,4 @@ export function PageLoader() {
       </motion.div>
     </div>
   );
-}
+});
