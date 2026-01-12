@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { Camera, CameraOff, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -15,6 +15,23 @@ const qrCodeSchema = z.string()
   .min(1, "QR code cannot be empty")
   .max(200, "QR code too long")
   .startsWith("ATTEND-", "Not a valid attendance code");
+
+// Response message validation schema - ensures only safe strings are displayed
+const responseMessageSchema = z.string()
+  .max(500, "Message too long")
+  .transform((val) => {
+    // Strip any HTML-like content as defense-in-depth
+    return val.replace(/<[^>]*>/g, '').trim();
+  });
+
+// Sanitize and validate message for safe display
+const sanitizeMessage = (message: unknown): string => {
+  if (typeof message !== 'string') {
+    return '';
+  }
+  const result = responseMessageSchema.safeParse(message);
+  return result.success ? result.data : '';
+};
 
 export function QRScanner() {
   const [status, setStatus] = useState<ScanStatus>("idle");
@@ -114,30 +131,33 @@ export function QRScanner() {
         error?: string;
       } | null;
 
-      // Handle the response from the server
+      // Handle the response from the server with sanitized messages
       if (result && result.success) {
         setScannedData(decodedText);
-        setResultMessage(result.class_name || "");
+        // Sanitize class_name before display
+        const safeClassName = sanitizeMessage(result.class_name);
+        setResultMessage(safeClassName);
         setStatus("success");
 
         if (result.already_recorded) {
           toast({
             title: "Already Checked In",
-            description: `You have already marked attendance for ${result.class_name}`,
+            description: `You have already marked attendance for ${safeClassName}`,
           });
         } else {
           toast({
             title: "Attendance Marked!",
-            description: `Successfully checked in for ${result.class_name}`,
+            description: `Successfully checked in for ${safeClassName}`,
           });
         }
       } else {
         setStatus("error");
-        const errorMessage = result?.error || "Invalid or expired attendance code";
-        setResultMessage(errorMessage);
+        // Sanitize error message before display
+        const safeErrorMessage = sanitizeMessage(result?.error) || "Invalid or expired attendance code";
+        setResultMessage(safeErrorMessage);
         toast({
           title: "Invalid Code",
-          description: errorMessage,
+          description: safeErrorMessage,
           variant: "destructive",
         });
       }
