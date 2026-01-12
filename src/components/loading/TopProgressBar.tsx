@@ -1,32 +1,43 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback, memo } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function TopProgressBar() {
+const PROGRESS_STEPS = [
+  { delay: 50, value: 30 },
+  { delay: 150, value: 60 },
+  { delay: 300, value: 80 },
+  { delay: 400, value: 100 },
+] as const;
+
+export const TopProgressBar = memo(function TopProgressBar() {
   const location = useLocation();
   const [isNavigating, setIsNavigating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const timersRef = useRef<NodeJS.Timeout[]>([]);
+
+  const clearTimers = useCallback(() => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+  }, []);
 
   useEffect(() => {
+    clearTimers();
     setIsNavigating(true);
     setProgress(0);
 
-    // Simulate progress
-    const timer1 = setTimeout(() => setProgress(30), 50);
-    const timer2 = setTimeout(() => setProgress(60), 150);
-    const timer3 = setTimeout(() => setProgress(80), 300);
-    const timer4 = setTimeout(() => {
-      setProgress(100);
-      setTimeout(() => setIsNavigating(false), 200);
-    }, 400);
+    PROGRESS_STEPS.forEach(({ delay, value }) => {
+      const timer = setTimeout(() => {
+        setProgress(value);
+        if (value === 100) {
+          const hideTimer = setTimeout(() => setIsNavigating(false), 200);
+          timersRef.current.push(hideTimer);
+        }
+      }, delay);
+      timersRef.current.push(timer);
+    });
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-      clearTimeout(timer4);
-    };
-  }, [location.pathname]);
+    return clearTimers;
+  }, [location.pathname, clearTimers]);
 
   return (
     <AnimatePresence>
@@ -50,4 +61,4 @@ export function TopProgressBar() {
       )}
     </AnimatePresence>
   );
-}
+});

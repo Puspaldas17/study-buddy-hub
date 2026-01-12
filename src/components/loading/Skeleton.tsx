@@ -1,23 +1,21 @@
 import { cn } from "@/lib/utils";
+import { memo } from "react";
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
-export function Skeleton({ className, style, ...props }: SkeletonProps) {
+export const Skeleton = memo(function Skeleton({ className, style, ...props }: SkeletonProps) {
   return (
     <div
-      className={cn(
-        "animate-pulse rounded-md bg-muted",
-        className
-      )}
+      className={cn("animate-pulse rounded-md bg-muted", className)}
       style={style}
       {...props}
     />
   );
-}
+});
 
-export function CardSkeleton() {
+export const CardSkeleton = memo(function CardSkeleton() {
   return (
     <div className="rounded-lg border border-border bg-card p-6 space-y-4">
       <div className="flex items-center gap-4">
@@ -34,9 +32,9 @@ export function CardSkeleton() {
       </div>
     </div>
   );
-}
+});
 
-export function TableRowSkeleton() {
+export const TableRowSkeleton = memo(function TableRowSkeleton() {
   return (
     <div className="flex items-center gap-4 py-4 px-4 border-b border-border">
       <Skeleton className="h-10 w-10 rounded-full" />
@@ -45,9 +43,9 @@ export function TableRowSkeleton() {
       <Skeleton className="h-4 w-16" />
     </div>
   );
-}
+});
 
-export function StatsCardSkeleton() {
+export const StatsCardSkeleton = memo(function StatsCardSkeleton() {
   return (
     <div className="rounded-lg border border-border bg-card p-6">
       <div className="flex items-center justify-between">
@@ -60,9 +58,11 @@ export function StatsCardSkeleton() {
       </div>
     </div>
   );
-}
+});
 
-export function ChartSkeleton() {
+const CHART_HEIGHTS = [40, 65, 45, 80, 55, 70, 60] as const;
+
+export const ChartSkeleton = memo(function ChartSkeleton() {
   return (
     <div className="rounded-lg border border-border bg-card p-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -70,39 +70,32 @@ export function ChartSkeleton() {
         <Skeleton className="h-8 w-24" />
       </div>
       <div className="flex items-end gap-2 h-48">
-        {[40, 65, 45, 80, 55, 70, 60].map((height, i) => (
-          <Skeleton 
-            key={i} 
-            className="flex-1" 
-            style={{ height: `${height}%` }} 
-          />
+        {CHART_HEIGHTS.map((height, i) => (
+          <Skeleton key={i} className="flex-1" style={{ height: `${height}%` }} />
         ))}
       </div>
     </div>
   );
-}
+});
 
-export function DashboardSkeleton() {
+export const DashboardSkeleton = memo(function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="space-y-2">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-4 w-96" />
       </div>
       
-      {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <StatsCardSkeleton key={i} />
         ))}
       </div>
       
-      {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartSkeleton />
         <ChartSkeleton />
       </div>
     </div>
   );
-}
+});
