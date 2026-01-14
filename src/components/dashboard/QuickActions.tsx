@@ -1,7 +1,7 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { QrCode, Upload, Plus, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 const actions = [
   {
@@ -27,9 +27,9 @@ const actions = [
   },
 ];
 
-export function QuickActions() {
+export const QuickActions = forwardRef<HTMLDivElement>((_, ref) => {
   return (
-    <Card variant="glass" className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
+    <Card ref={ref} variant="glass" className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
       <CardHeader className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-2 lg:pb-2">
         <CardTitle className="text-sm sm:text-base lg:text-lg">Quick Actions</CardTitle>
       </CardHeader>
@@ -55,4 +55,6 @@ export function QuickActions() {
       </CardContent>
     </Card>
   );
-}
+});
+
+QuickActions.displayName = "QuickActions";

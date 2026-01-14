@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, forwardRef } from "react";
 import { CheckCircle2, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,7 @@ interface AttendanceRecord {
   status: string;
 }
 
-export function RecentActivity() {
+export const RecentActivity = forwardRef<HTMLDivElement>((_, ref) => {
   const { user } = useAuth();
   const [activities, setActivities] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export function RecentActivity() {
   }, [user]);
 
   return (
-    <Card variant="glass" className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
+    <Card ref={ref} variant="glass" className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
       <CardHeader className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-2 lg:pb-2">
         <CardTitle className="text-sm sm:text-base lg:text-lg">Recent Activity</CardTitle>
       </CardHeader>
@@ -82,4 +82,6 @@ export function RecentActivity() {
       </CardContent>
     </Card>
   );
-}
+});
+
+RecentActivity.displayName = "RecentActivity";
